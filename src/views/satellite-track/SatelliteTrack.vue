@@ -16,7 +16,10 @@ import { getTleWithLastThirtyDays } from '@/http/index'
 
 import SatelliteEntity from '@/js/SatelliteEntity';
 
-window.CESIUM_BASE_URL = '/cesium';
+
+console.log(import.meta.env.MODE)
+
+window.CESIUM_BASE_URL = import.meta.env.MODE === 'development' ? '/cesium' : '/satellite-track/cesium';
 
 let viewer;
 const totalSeconds = 864000;
