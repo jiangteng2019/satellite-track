@@ -8,7 +8,7 @@
 import * as Cesium from 'cesium';
 import "cesium/Build/Cesium/Widgets/widgets.css";
 
-import { onMounted } from 'vue';
+import { onMounted, onBeforeMount } from 'vue';
 
 import "./SatelliteTrack.scss"
 
@@ -17,12 +17,11 @@ import { getTleWithLastThirtyDays } from '@/http/index'
 import SatelliteEntity from '@/js/SatelliteEntity';
 
 
-console.log(import.meta.env.MODE)
-
 window.CESIUM_BASE_URL = import.meta.env.MODE === 'development' ? '/cesium' : '/satellite-track/cesium';
 
 let viewer;
 const totalSeconds = 864000;
+const satelliteMap = new Map();
 
 
 Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJiYjZmMWM4Ny01YzQ4LTQ3MzUtYTI5Mi1hNTgyNjdhMmFiMmMiLCJpZCI6NjIwMjgsImlhdCI6MTYyNjY3MTMxNX0.5SelYUyzXWRoMyjjFvmFIAoPtWlJPQMjsVl2e_jQe-c';
@@ -96,12 +95,23 @@ function parseTle(data = "") {
     return tles;
 }
 
-//处理点击事件
 function addCesiumEventListener() {
-    let that = this;
     let callback = viewer.screenSpaceEventHandler.getInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);// 还原点击聚焦方块的效果。
     viewer.screenSpaceEventHandler.setInputAction(function onLeftClick(movement) {
         callback(movement);
+        const pickedFeature = viewer.scene.pick(movement.position);
+        console.log(pickedFeature);
+        if (!Cesium.defined(pickedFeature)) {
+            satelliteMap.forEach(item => {
+                item.path.show = false;
+            })
+            return;
+        }
+        if (pickedFeature) {
+            pickedFeature.id.path.show = new Cesium.ConstantProperty(true);
+            pickedFeature.id.label.distanceDisplayCondition = undefined;
+        }
+
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 }
 
@@ -115,7 +125,9 @@ onMounted(async () => {
 
     parsedResult.forEach(tle => {
         let satellite = new SatelliteEntity(tle);
-        viewer.entities.add(satellite.createSatelliteEntity());
+        let cesiumSateEntity = satellite.createSatelliteEntity();
+        let result = viewer.entities.add(cesiumSateEntity);
+        satelliteMap.set(satellite.name, result);
     });
 })
 

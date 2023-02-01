@@ -5,16 +5,16 @@ class SatelliteEntity {
 
     constructor(tle = "", options = {}) {
         const [name, tleLine1, tleLine2] = this._checkTle(tle);
+        let circle = tleLine2.slice(52, 64);
 
-
-        this.name = name;
+        this.name = name.trim();
         this.tleLine1 = tleLine1.trim();
         this.tleLine2 = tleLine2.trim();
         this.satrec = twoline2satrec(this.tleLine1, this.tleLine2);
 
         this.totalSeconds = 864000;// 864000
-        this.stepSeconds = 300;
-        this.leadTime = 5822;
+        this.stepSeconds = 150;
+        this.leadTime = parseInt(24 * 3600 / circle);
         this.trailTime = 0;
 
     }
@@ -39,6 +39,7 @@ class SatelliteEntity {
         for (let i = 0; i < this.totalSeconds / this.stepSeconds; i++) {
             let sateTime = new Date(now + i * this.stepSeconds * 1000);
             let sateCoord = this.getPositionEci(sateTime);
+            if (!sateCoord) continue;
             const cesiumTime = Cesium.JulianDate.addSeconds(start, i * this.stepSeconds, new Cesium.JulianDate());
             const cesiumPosition = { x: sateCoord.x * 1000, y: sateCoord.y * 1000, z: sateCoord.z * 1000 };
             positionProperty.addSample(cesiumTime, cesiumPosition);
@@ -55,19 +56,32 @@ class SatelliteEntity {
             description: this.name,
             availability: new Cesium.TimeIntervalCollection([new Cesium.TimeInterval({ start: start, stop: stop })]),
             position: this._getPositionProperty(),
-            point: { pixelSize: 6, color: Cesium.Color.RED },
+            point: { pixelSize: 8, color: Cesium.Color.fromRandom({ alpha: 1.0 }) },
             path: new Cesium.PathGraphics({
-                width: 0.5,
+                width: 1,
                 show: false,
                 leadTime: this.leadTime,
                 trailTime: this.trailTime,
-                material: Cesium.Color.LIME
+                material: Cesium.Color.LIME,
             }),
+            label: {
+                text: this.name,
+                font: '12px sans-serif',
+                scale: 0.8,
+                showBackground: true,
+                backgroundColor: new Cesium.Color(0.165, 0.165, 0.165, 0.5),
+                backgroundPadding: new Cesium.Cartesian2(4, 4),
+                outlineWidth: 1,
+                verticalOrigin: Cesium.VerticalOrigin.TOP,
+                horizontalOrigin: Cesium.VerticalOrigin.LEFT,
+                pixelOffset: new Cesium.Cartesian2(0, 5),
+                // scaleByDistance: new Cesium.NearFarScalar(1.5e3, 1.5, 8.0e7, 0.0),
+                fillColor: Cesium.Color.WHITE,
+                distanceDisplayCondition: new Cesium.DistanceDisplayCondition(10.0, 5000000),
+            }
         }
         return satelliteEntity;
     }
-
-
 }
 
 export default SatelliteEntity
