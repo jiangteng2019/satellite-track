@@ -14,14 +14,23 @@ import "./SatelliteTrack.scss"
 
 import { getTleWithLastThirtyDays } from '@/http/index'
 
+import SatelliteEntity from '@/js/SatelliteEntity';
+
 window.CESIUM_BASE_URL = '/cesium';
 
 let viewer;
+const totalSeconds = 864000;
 
 
 Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJiYjZmMWM4Ny01YzQ4LTQ3MzUtYTI5Mi1hNTgyNjdhMmFiMmMiLCJpZCI6NjIwMjgsImlhdCI6MTYyNjY3MTMxNX0.5SelYUyzXWRoMyjjFvmFIAoPtWlJPQMjsVl2e_jQe-c';
 
 function initCesium() {
+    // 复写原型方法 用于timeline组件日期格式化；
+    Cesium.Timeline.prototype.makeLabel = function (time) {
+        let minutes = 0 - new Date().getTimezoneOffset();
+        let dataZone8 = Cesium.JulianDate.addMinutes(time, minutes, new Cesium.JulianDate());
+        return Cesium.JulianDate.toIso8601(dataZone8).slice(0, 19);
+    }
 
     let imgLayer = new Cesium.MapboxImageryProvider({
         mapId: 'mapbox.satellite',
@@ -34,11 +43,19 @@ function initCesium() {
         baseLayerPicker: false,
         geocoder: false,
         navigationHelpButton: false,
+        infoBox: false
     });
 
-    // const buildingTileset = viewer.scene.primitives.add(Cesium.createOsmBuildings());
-
-
+    // 时间格式化
+    let minutes = 0 - new Date().getTimezoneOffset(); // 0 - (-480);
+    viewer.animation.viewModel.timeFormatter = function (date, viewModel) {
+        let dataZone8 = Cesium.JulianDate.addMinutes(date, minutes, new Cesium.JulianDate());
+        return Cesium.JulianDate.toIso8601(dataZone8).slice(11, 19);
+    }
+    viewer.animation.viewModel.dateFormatter = function (date, viewModel) {
+        let dataZone8 = Cesium.JulianDate.addMinutes(date, minutes, new Cesium.JulianDate());
+        return Cesium.JulianDate.toIso8601(dataZone8).slice(0, 10);
+    }
 
     Cesium.Camera.DEFAULT_VIEW_RECTANGLE = Cesium.Rectangle.fromDegrees(
         75.0, // 西经
@@ -48,10 +65,55 @@ function initCesium() {
     );
 }
 
+function initTimeLine() {
+    const start = Cesium.JulianDate.fromIso8601(new Date().toISOString());
+    const stop = Cesium.JulianDate.addSeconds(start, totalSeconds, new Cesium.JulianDate());
+    viewer.clock.startTime = start.clone();
+    viewer.clock.stopTime = stop.clone();
+    viewer.clock.currentTime = start.clone();
+    viewer.timeline.zoomTo(start, stop);
+    viewer.clock.multiplier = 1;
+    viewer.clock.shouldAnimate = true;
+    viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP;
+}
+
+function parseTle(data = "") {
+    if (data.length === 0) return;
+    let result = data.split("\r\n");
+    let tles = [], i = 0, tem = [];
+    result.forEach(item => {
+        i++;
+        tem.push(item)
+        if (i === 3) {
+            tles.push(tem.join("\r\n"));
+            tem = [];
+            i = 0;
+        }
+    });
+    return tles;
+}
+
+//处理点击事件
+function addCesiumEventListener() {
+    let that = this;
+    let callback = viewer.screenSpaceEventHandler.getInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);// 还原点击聚焦方块的效果。
+    viewer.screenSpaceEventHandler.setInputAction(function onLeftClick(movement) {
+        callback(movement);
+    }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+}
+
 onMounted(async () => {
     initCesium();
+    initTimeLine();
+    addCesiumEventListener();
+
     let result = await getTleWithLastThirtyDays();
-    console.log(result);
+    let parsedResult = parseTle(result);
+
+    parsedResult.forEach(tle => {
+        let satellite = new SatelliteEntity(tle);
+        viewer.entities.add(satellite.createSatelliteEntity());
+    });
 })
 
 
