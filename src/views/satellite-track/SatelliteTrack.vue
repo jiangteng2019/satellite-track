@@ -1,5 +1,26 @@
 <template>
     <div id="cesiumContainer"></div>
+    <div class="operate_container">
+        <div class="menu_button" @click="drawer = !drawer">
+            <img src="../../assets/menu.svg" width="28" height="28" alt="">
+        </div>
+    </div>
+    <!-- 抽屉 -->
+    <el-drawer v-model="drawer" title="卫星选择" direction="ltr">
+        <el-row>
+            卫星
+        </el-row>
+        <el-checkbox-group v-model="checked" @change="handleSpacialInterestChange">
+            <el-checkbox v-for="(item, index) in options" :label="item.value">{{ item.label }}</el-checkbox>
+        </el-checkbox-group>
+
+        <el-row>
+            气象和地球资源卫星
+        </el-row>
+        <el-checkbox-group v-model="checked" @change="handleWeatherSatelliteChange">
+            <el-checkbox v-for="(item, index) in weatherSatellite" :label="item.value">{{ item.label }}</el-checkbox>
+        </el-checkbox-group>
+    </el-drawer>
 </template>
 
 <script setup>
@@ -8,7 +29,7 @@
 import * as Cesium from 'cesium';
 import "cesium/Build/Cesium/Widgets/widgets.css";
 
-import { onMounted, onBeforeMount } from 'vue';
+import { onMounted, onBeforeMount, ref } from 'vue';
 
 import "./SatelliteTrack.scss"
 
@@ -22,6 +43,83 @@ window.CESIUM_BASE_URL = import.meta.env.MODE === 'development' ? '/cesium' : '/
 let viewer;
 const totalSeconds = 864000;
 const satelliteMap = new Map();
+
+// 响应式数据
+const drawer = ref(false);
+const checked = ref([]);
+const options = ref([
+    {
+        label: "Last 30 Days' Launches",
+        value: 1
+    },
+    {
+        label: 'Space Stations',
+        value: 2
+    },
+    {
+        label: '100 (or so) Brightest',
+        value: 3
+    },
+    {
+        label: 'Active Satellites',
+        value: 4
+    },
+    {
+        label: 'Analyst Satellites ',
+        value: 5
+    },
+    {
+        label: 'IRIDIUM 33 Debris',
+        value: 6
+    },
+    {
+        label: 'COSMOS 2251 Debris',
+        value: 7
+    }
+])
+
+const weatherSatellite = ref([
+{
+        label: 'Weather',
+        value: 1
+    },
+    {
+        label: 'NOAA',
+        value: 2
+    },
+    {
+        label: 'GOES',
+        value: 3
+    },
+    {
+        label: 'Earth Resources',
+        value: 4
+    },
+    {
+        label: 'Search & Rescue (SARSAT) ',
+        value: 5
+    },
+    {
+        label: 'Disaster Monitoring',
+        value: 6
+    },
+    {
+        label: 'TDRSS', 
+        value: 7
+    },
+    {
+        label: 'ARGOS Data Collection System',
+        value: 8
+    },
+    {
+        label: 'Planet',
+        value: 9
+    },
+    {
+        label: 'Spire',
+        value: 10
+    }
+])
 
 
 Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJiYjZmMWM4Ny01YzQ4LTQ3MzUtYTI5Mi1hNTgyNjdhMmFiMmMiLCJpZCI6NjIwMjgsImlhdCI6MTYyNjY3MTMxNX0.5SelYUyzXWRoMyjjFvmFIAoPtWlJPQMjsVl2e_jQe-c';
@@ -113,6 +211,15 @@ function addCesiumEventListener() {
         }
 
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+}
+
+// 事件
+function handleSpacialInterestChange(e) {
+    console.log(e);
+}
+
+function handleWeatherSatelliteChange(e) {
+    console.log(e);
 }
 
 onMounted(async () => {

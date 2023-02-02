@@ -5,3 +5,46 @@
 .cesium-viewer-bottom {
     display: none;
 }
+
+.operate_container {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    z-index: 999;
+
+    .menu_button {
+        box-sizing: border-box;
+        width: 32px;
+        height: 32px;
+        border-radius: 14%;
+        padding: 0;
+        vertical-align: middle;
+        z-index: 0;
+        display: inline-block;
+        position: relative;
+        background: #303336;
+        border: 1px solid #444;
+        color: #edffff;
+        fill: #edffff;
+        cursor: pointer;
+    }
+    .menu_button:hover {
+        color: #fff;
+        fill: #fff;
+        background: #48b;
+        border-color: #aef;
+        box-shadow: 0 0 8px #fff;
+    }
+}
+
+.el-drawer {
+    background-color: rgba($color: #303336, $alpha: 0.9);
+    color: #fff;
+    .el-drawer__header {
+        background-color: #303336;
+        color: inherit;
+    }
+    .el-checkbox {
+        color: inherit;
+    }
+}

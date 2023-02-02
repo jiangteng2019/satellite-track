@@ -13,7 +13,7 @@ class SatelliteEntity {
         this.satrec = twoline2satrec(this.tleLine1, this.tleLine2);
 
         this.totalSeconds = 864000;// 864000
-        this.stepSeconds = 150;
+        this.stepSeconds = 100;
         this.leadTime = parseInt(24 * 3600 / circle);
         this.trailTime = 0;
 
@@ -56,7 +56,7 @@ class SatelliteEntity {
             description: this.name,
             availability: new Cesium.TimeIntervalCollection([new Cesium.TimeInterval({ start: start, stop: stop })]),
             position: this._getPositionProperty(),
-            point: { pixelSize: 8, color: Cesium.Color.fromRandom({ alpha: 1.0 }) },
+            point: { pixelSize: 10, color: Cesium.Color.fromRandom({ alpha: 1.0 }) },
             path: new Cesium.PathGraphics({
                 width: 1,
                 show: false,
