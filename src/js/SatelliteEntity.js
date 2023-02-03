@@ -12,7 +12,7 @@ class SatelliteEntity {
         this.tleLine2 = tleLine2.trim();
         this.satrec = twoline2satrec(this.tleLine1, this.tleLine2);
 
-        this.totalSeconds = 864000;// 864000
+        this.totalSeconds = 86400;// 24小时
         this.stepSeconds = 100;
         this.leadTime = parseInt(24 * 3600 / circle);
         this.trailTime = 0;
@@ -56,7 +56,7 @@ class SatelliteEntity {
             description: this.name,
             availability: new Cesium.TimeIntervalCollection([new Cesium.TimeInterval({ start: start, stop: stop })]),
             position: this._getPositionProperty(),
-            point: { pixelSize: 10, color: Cesium.Color.fromRandom({ alpha: 1.0 }) },
+            point: { pixelSize: 8, color: Cesium.Color.fromRandom({ alpha: 1.0 }) },
             path: new Cesium.PathGraphics({
                 width: 1,
                 show: false,
@@ -67,7 +67,6 @@ class SatelliteEntity {
             label: {
                 text: this.name,
                 font: '12px sans-serif',
-                scale: 0.8,
                 showBackground: true,
                 backgroundColor: new Cesium.Color(0.165, 0.165, 0.165, 0.5),
                 backgroundPadding: new Cesium.Cartesian2(4, 4),

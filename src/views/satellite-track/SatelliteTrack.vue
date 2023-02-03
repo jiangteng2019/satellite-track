@@ -7,18 +7,11 @@
     </div>
     <!-- 抽屉 -->
     <el-drawer v-model="drawer" title="卫星选择" direction="ltr">
-        <el-row>
-            卫星
-        </el-row>
-        <el-checkbox-group v-model="checked" @change="handleSpacialInterestChange">
-            <el-checkbox v-for="(item, index) in options" :label="item.value">{{ item.label }}</el-checkbox>
-        </el-checkbox-group>
-
-        <el-row>
-            气象和地球资源卫星
-        </el-row>
-        <el-checkbox-group v-model="checked" @change="handleWeatherSatelliteChange">
-            <el-checkbox v-for="(item, index) in weatherSatellite" :label="item.value">{{ item.label }}</el-checkbox>
+        <el-checkbox-group v-model="checked" @change="handleSatelliteChange" :max=5>
+            <template v-for="(item, index) in allSatellite" :key="index">
+                <el-row v-if="item.type === 'title'" class="satellite_type">{{ item.label }}</el-row>
+                <el-checkbox v-if="!item.type" :label="item.value">{{ item.label }}</el-checkbox>
+            </template>
         </el-checkbox-group>
     </el-drawer>
 </template>
@@ -29,97 +22,33 @@
 import * as Cesium from 'cesium';
 import "cesium/Build/Cesium/Widgets/widgets.css";
 
-import { onMounted, onBeforeMount, ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 
 import "./SatelliteTrack.scss"
 
-import { getTleWithLastThirtyDays } from '@/http/index'
+import { getTleDataFromExternal } from '@/http/index'
 
 import SatelliteEntity from '@/js/SatelliteEntity';
+
+import { specialSatellite, weatherSatellite, communicationSatellite, navigationSatellite, scientificSatellite, miscellaneousSatellite } from "./satelliteType"
+import { add } from 'lodash';
+
+let allSatellite = [...specialSatellite, ...weatherSatellite, ...communicationSatellite, ...navigationSatellite, ...scientificSatellite, ...miscellaneousSatellite];
 
 
 window.CESIUM_BASE_URL = import.meta.env.MODE === 'development' ? '/cesium' : '/satellite-track/cesium';
 
 let viewer;
-const totalSeconds = 864000;
+const totalSeconds = 86400;
+// 保存所有的卫星实例 
 const satelliteMap = new Map();
 
 // 响应式数据
 const drawer = ref(false);
-const checked = ref([]);
-const options = ref([
-    {
-        label: "Last 30 Days' Launches",
-        value: 1
-    },
-    {
-        label: 'Space Stations',
-        value: 2
-    },
-    {
-        label: '100 (or so) Brightest',
-        value: 3
-    },
-    {
-        label: 'Active Satellites',
-        value: 4
-    },
-    {
-        label: 'Analyst Satellites ',
-        value: 5
-    },
-    {
-        label: 'IRIDIUM 33 Debris',
-        value: 6
-    },
-    {
-        label: 'COSMOS 2251 Debris',
-        value: 7
-    }
-])
 
-const weatherSatellite = ref([
-{
-        label: 'Weather',
-        value: 1
-    },
-    {
-        label: 'NOAA',
-        value: 2
-    },
-    {
-        label: 'GOES',
-        value: 3
-    },
-    {
-        label: 'Earth Resources',
-        value: 4
-    },
-    {
-        label: 'Search & Rescue (SARSAT) ',
-        value: 5
-    },
-    {
-        label: 'Disaster Monitoring',
-        value: 6
-    },
-    {
-        label: 'TDRSS', 
-        value: 7
-    },
-    {
-        label: 'ARGOS Data Collection System',
-        value: 8
-    },
-    {
-        label: 'Planet',
-        value: 9
-    },
-    {
-        label: 'Spire',
-        value: 10
-    }
-])
+const checked = ref([]);
+
+const clickedSatelliteArray = [];
 
 
 Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJiYjZmMWM4Ny01YzQ4LTQ3MzUtYTI5Mi1hNTgyNjdhMmFiMmMiLCJpZCI6NjIwMjgsImlhdCI6MTYyNjY3MTMxNX0.5SelYUyzXWRoMyjjFvmFIAoPtWlJPQMjsVl2e_jQe-c';
@@ -194,48 +123,92 @@ function parseTle(data = "") {
 }
 
 function addCesiumEventListener() {
-    let callback = viewer.screenSpaceEventHandler.getInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);// 还原点击聚焦方块的效果。
+    let callback = viewer.screenSpaceEventHandler.getInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
     viewer.screenSpaceEventHandler.setInputAction(function onLeftClick(movement) {
         callback(movement);
         const pickedFeature = viewer.scene.pick(movement.position);
         console.log(pickedFeature);
         if (!Cesium.defined(pickedFeature)) {
-            satelliteMap.forEach(item => {
-                item.path.show = false;
+            clickedSatelliteArray.forEach(item => {
+                item.id.path.show = false;
             })
             return;
         }
         if (pickedFeature) {
             pickedFeature.id.path.show = new Cesium.ConstantProperty(true);
             pickedFeature.id.label.distanceDisplayCondition = undefined;
+            clickedSatelliteArray.push(pickedFeature);
         }
 
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 }
 
 // 事件
-function handleSpacialInterestChange(e) {
-    console.log(e);
+function handleSatelliteChange(e) {
+
 }
 
-function handleWeatherSatelliteChange(e) {
-    console.log(e);
+
+// 获取tle数据，从缓存中获取，若无请求数据
+
+async function getTleData(path) {
+    let data = localStorage.getItem(path);
+    if (data) {
+        console.log(`%c 命中缓存,key值为${path}`, 'color:#0f0;');
+        return data;
+    } else {
+        console.warn("未命中缓存，开始下载TLE数据");
+        return await getTleDataFromExternal(path);
+    }
 }
 
+// 创建satellite entity 实例
+async function addSatellite(path) {
+    // 判断map中是否已经包含对应的路径实例
+    if (satelliteMap.has(path)) {
+        let satelliteList = satelliteMap.get(path);
+        satelliteList.forEach(item => viewer.entities.add(item));
+    } else {
+        let result = await getTleData(path);
+        let parsedResult = parseTle(result);
+        let satelliteSet = new Set();
+
+        parsedResult.forEach(tle => {
+            let satellite = new SatelliteEntity(tle);
+            let cesiumSateEntity = satellite.createSatelliteEntity();
+            let result = viewer.entities.add(cesiumSateEntity);
+            satelliteSet.add(result);
+        });
+        satelliteMap.set(path, satelliteSet);
+    }
+}
+
+function removeSatellite(path) {
+    if (satelliteMap.has(path)) {
+        let satelliteList = satelliteMap.get(path);
+        satelliteList.forEach(item => viewer.entities.remove(item));
+    }
+}
+
+// 侦听器
+watch(checked, (newValue, oldValue) => {
+    let filterValue = newValue.concat(oldValue).filter((item, index, arr) => arr.indexOf(item) === arr.lastIndexOf(item));
+    let satelliteClassify = allSatellite.find(item => item.value === filterValue[0]);
+    // 勾选了卫星
+    if (newValue.length > oldValue.length) {
+        addSatellite(satelliteClassify.group);
+    } else {
+        //取消了勾选
+        removeSatellite(satelliteClassify.group);
+    }
+})
+
+
+// 生命周期
 onMounted(async () => {
     initCesium();
     initTimeLine();
     addCesiumEventListener();
-
-    let result = await getTleWithLastThirtyDays();
-    let parsedResult = parseTle(result);
-
-    parsedResult.forEach(tle => {
-        let satellite = new SatelliteEntity(tle);
-        let cesiumSateEntity = satellite.createSatelliteEntity();
-        let result = viewer.entities.add(cesiumSateEntity);
-        satelliteMap.set(satellite.name, result);
-    });
 })
 
 

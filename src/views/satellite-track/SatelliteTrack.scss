@@ -28,6 +28,7 @@
         fill: #edffff;
         cursor: pointer;
     }
+
     .menu_button:hover {
         color: #fff;
         fill: #fff;
@@ -40,11 +41,37 @@
 .el-drawer {
     background-color: rgba($color: #303336, $alpha: 0.9);
     color: #fff;
+
+    .satellite_type {
+        color: #95D475;
+        font-weight: bold;
+        font-size: 14px;
+        padding: 10px;
+        padding-left: 0;
+    }
+
     .el-drawer__header {
         background-color: #303336;
         color: inherit;
+        margin: 0
     }
+
     .el-checkbox {
         color: inherit;
     }
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #ccc;
+    border-radius: 10px;
+    transition: all .2s ease-in-out;
 }
