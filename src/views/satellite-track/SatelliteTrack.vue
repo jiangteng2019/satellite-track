@@ -13,6 +13,15 @@
                 <el-checkbox v-if="!item.type" :label="item.value">{{ item.label }}</el-checkbox>
             </template>
         </el-checkbox-group>
+        <el-row style="padding: 30px 0px;">
+            <el-button type="primary" @click="clearTLECache">
+                清除TLE缓存
+            </el-button>
+
+            <el-button type="primary" @click="clearSatelliteOrbit">
+                清除轨道
+            </el-button>
+        </el-row>
     </el-drawer>
 </template>
 
@@ -31,7 +40,6 @@ import { getTleDataFromExternal } from '@/http/index'
 import SatelliteEntity from '@/js/SatelliteEntity';
 
 import { specialSatellite, weatherSatellite, communicationSatellite, navigationSatellite, scientificSatellite, miscellaneousSatellite } from "./satelliteType"
-import { add } from 'lodash';
 
 let allSatellite = [...specialSatellite, ...weatherSatellite, ...communicationSatellite, ...navigationSatellite, ...scientificSatellite, ...miscellaneousSatellite];
 
@@ -46,7 +54,7 @@ const satelliteMap = new Map();
 // 响应式数据
 const drawer = ref(false);
 
-const checked = ref([]);
+const checked = ref([1]);
 
 const clickedSatelliteArray = [];
 
@@ -129,10 +137,7 @@ function addCesiumEventListener() {
         const pickedFeature = viewer.scene.pick(movement.position);
         console.log(pickedFeature);
         if (!Cesium.defined(pickedFeature)) {
-            clickedSatelliteArray.forEach(item => {
-                item.id.path.show = false;
-            })
-            return;
+
         }
         if (pickedFeature) {
             pickedFeature.id.path.show = new Cesium.ConstantProperty(true);
@@ -146,6 +151,19 @@ function addCesiumEventListener() {
 // 事件
 function handleSatelliteChange(e) {
 
+}
+
+function clearTLECache() {
+    localStorage.clear();
+    ElMessage.success('清除成功')
+}
+
+function clearSatelliteOrbit() {
+    if (clickedSatelliteArray.length) {
+        clickedSatelliteArray.forEach(item => {
+            item.id ? item.id.path.show = false : '';
+        })
+    }
 }
 
 
@@ -209,6 +227,7 @@ onMounted(async () => {
     initCesium();
     initTimeLine();
     addCesiumEventListener();
+    addSatellite('last-30-days');
 })
 
 
