@@ -56,7 +56,11 @@ class SatelliteEntity {
             description: this.name,
             availability: new Cesium.TimeIntervalCollection([new Cesium.TimeInterval({ start: start, stop: stop })]),
             position: this._getPositionProperty(),
-            point: { pixelSize: 8, color: Cesium.Color.fromRandom({ alpha: 1.0 }) },
+            point: {
+                pixelSize: 8,
+                color: Cesium.Color.fromRandom({ alpha: 1.0 }),
+                // scaleByDistance: new Cesium.NearFarScalar(1.5e3, 1, 8.0e8, 0.5),
+            },
             path: new Cesium.PathGraphics({
                 width: 1,
                 show: false,
@@ -74,7 +78,6 @@ class SatelliteEntity {
                 verticalOrigin: Cesium.VerticalOrigin.TOP,
                 horizontalOrigin: Cesium.VerticalOrigin.LEFT,
                 pixelOffset: new Cesium.Cartesian2(0, 5),
-                // scaleByDistance: new Cesium.NearFarScalar(1.5e3, 1.5, 8.0e7, 0.0),
                 fillColor: Cesium.Color.WHITE,
                 distanceDisplayCondition: new Cesium.DistanceDisplayCondition(10.0, 5000000),
             }

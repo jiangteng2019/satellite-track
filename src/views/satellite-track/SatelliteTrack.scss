@@ -27,6 +27,7 @@
         color: #edffff;
         fill: #edffff;
         cursor: pointer;
+        margin-right: 5px;
     }
 
     .menu_button:hover {
@@ -36,6 +37,12 @@
         border-color: #aef;
         box-shadow: 0 0 8px #fff;
     }
+}
+
+.add_satellite {
+    display: flex;
+    justify-content: center;
+    padding: 10px;
 }
 
 .el-drawer {

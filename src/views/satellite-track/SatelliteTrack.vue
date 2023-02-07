@@ -4,16 +4,13 @@
         <div class="menu_button" @click="drawer = !drawer">
             <img src="../../assets/menu.svg" width="28" height="28" alt="">
         </div>
+        <div class="menu_button" @click="drawerImport = !drawerImport">
+            <img src="../../assets/import.svg" width="28" height="28" alt="">
+        </div>
     </div>
-    <!-- 抽屉 -->
-    <el-drawer v-model="drawer" title="卫星选择" direction="ltr">
-        <el-checkbox-group v-model="checked" @change="handleSatelliteChange" :max=5>
-            <template v-for="(item, index) in allSatellite" :key="index">
-                <el-row v-if="item.type === 'title'" class="satellite_type">{{ item.label }}</el-row>
-                <el-checkbox v-if="!item.type" :label="item.value">{{ item.label }}</el-checkbox>
-            </template>
-        </el-checkbox-group>
-        <el-row style="padding: 30px 0px;">
+    <!-- 抽屉1 -->
+    <el-drawer v-model="drawer" title="控制面板" direction="ltr">
+        <el-row style="padding-bottom: 10px;">
             <el-button type="primary" @click="clearTLECache">
                 清除TLE缓存
             </el-button>
@@ -22,6 +19,28 @@
                 清除轨道
             </el-button>
         </el-row>
+        <el-checkbox-group v-model="checked" @change="handleSatelliteChange" :max=5>
+            <template v-for="(item, index) in allSatellite" :key="index">
+                <el-row v-if="item.type === 'title'" class="satellite_type">{{ item.label }}</el-row>
+                <el-checkbox v-if="!item.type" :label="item.value">{{ item.label }}</el-checkbox>
+            </template>
+        </el-checkbox-group>
+    </el-drawer>
+    <!-- 抽屉2 -->
+    <el-drawer v-model="drawerImport" title="自定义卫星数据" direction="ltr">
+        <el-input v-model="tleData" type="textarea" placeholder="Please input tle data" :rows="20" />
+        <el-row class="add_satellite">
+            <el-button type="primary" @click="handleAddSatellite">
+                添加
+            </el-button>
+            <el-button type="default" @click="handleImportSatellite">
+                导入
+            </el-button>
+            <el-button type="danger" @click="handleClearSatellite">
+                清空
+            </el-button>
+        </el-row>
+
     </el-drawer>
 </template>
 
@@ -50,13 +69,23 @@ let viewer;
 const totalSeconds = 86400;
 // 保存所有的卫星实例 
 const satelliteMap = new Map();
-
+// 自定义的卫星
+const customSatelliteMap = new Map();
 // 响应式数据
 const drawer = ref(false);
+
+const drawerImport = ref(false);
 
 const checked = ref([1]);
 
 const clickedSatelliteArray = [];
+
+let tleData = ref(`BEIDOU-3 G2             
+1 45344U 20017A   23037.82027362 -.00000136  00000+0  00000+0 0  9994
+2 45344   1.9879   4.6761 0000950 328.7503 178.5761  1.00272999 10962
+BEIDOU-3 G3             
+1 45807U 20040A   23037.85365455 -.00000347  00000+0  00000+0 0  9999
+2 45807   0.9369 314.6571 0008244 342.4957 257.2704  1.00264764  9772`);
 
 
 Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJiYjZmMWM4Ny01YzQ4LTQ3MzUtYTI5Mi1hNTgyNjdhMmFiMmMiLCJpZCI6NjIwMjgsImlhdCI6MTYyNjY3MTMxNX0.5SelYUyzXWRoMyjjFvmFIAoPtWlJPQMjsVl2e_jQe-c';
@@ -130,6 +159,22 @@ function parseTle(data = "") {
     return tles;
 }
 
+function parseTleWithSimpleSplit(data = "") {
+    if (data.length === 0) return;
+    let result = data.split("\n");
+    let tles = [], i = 0, tem = [];
+    result.forEach(item => {
+        i++;
+        tem.push(item)
+        if (i === 3) {
+            tles.push(tem.join("\r\n"));
+            tem = [];
+            i = 0;
+        }
+    });
+    return tles;
+}
+
 function addCesiumEventListener() {
     let callback = viewer.screenSpaceEventHandler.getInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
     viewer.screenSpaceEventHandler.setInputAction(function onLeftClick(movement) {
@@ -164,6 +209,36 @@ function clearSatelliteOrbit() {
             item.id ? item.id.path.show = false : '';
         })
     }
+}
+
+// 添加自定义卫星实例
+function handleAddSatellite() {
+    if (!tleData.value.length) return;
+    clearcustomSatelliteMap();
+    let result = parseTleWithSimpleSplit(tleData.value);
+    result.forEach(tle => {
+        let satellite = new SatelliteEntity(tle);
+        let cesiumSateEntity = satellite.createSatelliteEntity();
+        let result = viewer.entities.add(cesiumSateEntity);
+        customSatelliteMap.set(satellite.name, result)
+    });
+
+}
+
+function handleImportSatellite() {
+
+}
+
+// 清空所有状态，输入框和cesium实例
+function handleClearSatellite() {
+    clearcustomSatelliteMap();
+    tleData.value = "";
+}
+
+// 清空卫星实例;
+function clearcustomSatelliteMap() {
+    customSatelliteMap.forEach(item => viewer.entities.remove(item));
+    customSatelliteMap.clear();
 }
 
 
