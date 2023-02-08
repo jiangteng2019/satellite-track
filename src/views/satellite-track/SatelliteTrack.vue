@@ -162,6 +162,7 @@ function parseTle(data = "") {
 function parseTleWithSimpleSplit(data = "") {
     if (data.length === 0) return;
     let result = data.split("\n");
+    console.log(result)
     let tles = [], i = 0, tem = [];
     result.forEach(item => {
         i++;
@@ -211,9 +212,33 @@ function clearSatelliteOrbit() {
     }
 }
 
+function checkTleData(data) {
+    try {
+        if (!data.length) {
+            return false;
+        }
+        let dataArray = data.split('\n');
+        if (dataArray.length % 3 !== 0) {
+            return false;
+        }
+        dataArray.forEach((item, index) => {
+            if (index % 3 === 0 && !item) throw new Error(false);
+            if (index % 3 === 1 && item.length !== 69) throw new Error(false);
+            if (index % 3 === 2 && item.length !== 69) throw new Error(false);
+        })
+        return true;
+    } catch (error) {
+        console.log(error);
+        return false;
+    }
+}
+
 // 添加自定义卫星实例
 function handleAddSatellite() {
-    if (!tleData.value.length) return;
+    if (!checkTleData(tleData.value)) {
+        ElMessage.error('error tle data');
+        return;
+    }
     clearcustomSatelliteMap();
     let result = parseTleWithSimpleSplit(tleData.value);
     result.forEach(tle => {
