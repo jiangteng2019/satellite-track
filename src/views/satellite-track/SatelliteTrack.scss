@@ -11,6 +11,7 @@
     top: 5px;
     left: 5px;
     z-index: 999;
+    display: flex;
 
     .menu_button {
         box-sizing: border-box;
@@ -20,7 +21,6 @@
         padding: 0;
         vertical-align: middle;
         z-index: 0;
-        display: inline-block;
         position: relative;
         background: #303336;
         border: 1px solid #444;
@@ -28,6 +28,9 @@
         fill: #edffff;
         cursor: pointer;
         margin-right: 5px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
 
     .menu_button:hover {

@@ -2,23 +2,20 @@
     <div id="cesiumContainer"></div>
     <div class="operate_container">
         <div class="menu_button" @click="drawer = !drawer" title="控制面板">
-            <img src="../../assets/menu.svg" width="28" height="28" alt="">
+            <img src="../../assets/menu.svg" width="28" height="28" alt="控制面板">
         </div>
-        <div class="menu_button" @click="drawerImport = !drawerImport" title="导入">
-            <img src="../../assets/import.svg" width="28" height="28" alt="">
+        <div class="menu_button" @click="drawerImport = !drawerImport" title="自定义导入TLE数据">
+            <img src="../../assets/import.svg" width="28" height="28" alt="自定义导入TLE数据">
+        </div>
+        <div class="menu_button" @click="handleClearTLECache" title="清除TLE缓存">
+            <img src="../../assets/clean.svg" width="24" height="24" alt="清除TLE缓存">
+        </div>
+        <div class="menu_button" @click="clearSatelliteOrbit" title="清除轨道">
+            <img src="../../assets/hide.svg" width="24" height="24" alt="清除轨道">
         </div>
     </div>
     <!-- 抽屉1 -->
     <el-drawer v-model="drawer" title="控制面板" direction="ltr">
-        <el-row style="padding-bottom: 10px;">
-            <el-button type="primary" @click="clearTLECache">
-                清除TLE缓存
-            </el-button>
-
-            <el-button type="primary" @click="clearSatelliteOrbit">
-                清除轨道
-            </el-button>
-        </el-row>
         <el-checkbox-group v-model="checked" @change="handleSatelliteChange" :max=5>
             <template v-for="(item, index) in allSatellite" :key="index">
                 <el-row v-if="item.type === 'title'" class="satellite_type">{{ item.label }}</el-row>
@@ -36,7 +33,7 @@
             <el-upload class="upload_button" :on-change="handleImportSatellite" :show-file-list="false" accept="txt"
                 :limit="1" :auto-upload="false" ref="upload">
                 <template #trigger>
-                    <el-button type="primary">导入</el-button>
+                    <el-button type="default">导入</el-button>
                 </template>
             </el-upload>
             <el-button type="danger" @click="handleClearSatellite">
@@ -204,8 +201,22 @@ function handleSatelliteChange(e) {
 
 }
 
+function handleClearTLECache() {
+    ElMessageBox.confirm("清空TLE缓存后手动刷新页面将重新下载TLE数据，是否继续？", "确定", {
+        distinguishCancelAndClose: true,
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+    }).then(() => {
+        clearTLECache();
+    }).catch(() => {
+        console.log('取消');
+    })
+}
+
 function clearTLECache() {
-    localStorage.clear();
+    // satelliteMap.forEach(satelliteSet => satelliteSet.forEach(sate => viewer.entities.remove(sate)));
+    // satelliteMap.clear();  // 一级缓存
+    localStorage.clear(); // 二级缓存
     ElMessage.success('清除成功')
 }
 
@@ -244,7 +255,7 @@ function handleAddSatellite() {
         ElMessage.error('wrong TLE data');
         return;
     }
-    clearcustomSatelliteMap();
+    clearCustomSatelliteMap();
     let result = parseTleWithSimpleSplit(tleData.value);
     result.forEach(tle => {
         let satellite = new SatelliteEntity(tle);
@@ -257,6 +268,7 @@ function handleAddSatellite() {
 }
 
 async function handleImportSatellite(uploadFiles) {
+    upload.value.clearFiles();
     if (uploadFiles.raw.type !== "text/plain") {
         ElMessage.warning('请上传TXT格式的TLE数据');
         return;
@@ -267,13 +279,13 @@ async function handleImportSatellite(uploadFiles) {
 
 // 清空所有状态，输入框和cesium实例
 function handleClearSatellite() {
-    clearcustomSatelliteMap();
+    clearCustomSatelliteMap();
     tleData.value = "";
     upload.value.clearFiles();
 }
 
 // 清空卫星实例;
-function clearcustomSatelliteMap() {
+function clearCustomSatelliteMap() {
     customSatelliteMap.forEach(item => viewer.entities.remove(item));
     customSatelliteMap.clear();
 }
