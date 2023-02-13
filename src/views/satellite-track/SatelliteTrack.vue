@@ -1,10 +1,10 @@
 <template>
     <div id="cesiumContainer"></div>
     <div class="operate_container">
-        <div class="menu_button" @click="drawer = !drawer">
+        <div class="menu_button" @click="drawer = !drawer" title="控制面板">
             <img src="../../assets/menu.svg" width="28" height="28" alt="">
         </div>
-        <div class="menu_button" @click="drawerImport = !drawerImport">
+        <div class="menu_button" @click="drawerImport = !drawerImport" title="导入">
             <img src="../../assets/import.svg" width="28" height="28" alt="">
         </div>
     </div>
@@ -33,9 +33,12 @@
             <el-button type="primary" @click="handleAddSatellite">
                 添加
             </el-button>
-            <el-button type="default" @click="handleImportSatellite">
-                导入
-            </el-button>
+            <el-upload class="upload_button" :on-change="handleImportSatellite" :show-file-list="false" accept="txt"
+                :limit="1" :auto-upload="false" ref="upload">
+                <template #trigger>
+                    <el-button type="primary">导入</el-button>
+                </template>
+            </el-upload>
             <el-button type="danger" @click="handleClearSatellite">
                 清空
             </el-button>
@@ -79,6 +82,8 @@ const drawerImport = ref(false);
 const checked = ref([1]);
 
 const clickedSatelliteArray = [];
+
+const upload = ref(null);
 
 let tleData = ref(`BEIDOU-3 G2             
 1 45344U 20017A   23037.82027362 -.00000136  00000+0  00000+0 0  9994
@@ -223,8 +228,8 @@ function checkTleData(data) {
         }
         dataArray.forEach((item, index) => {
             if (index % 3 === 0 && !item) throw new Error(false);
-            if (index % 3 === 1 && item.length !== 69) throw new Error(false);
-            if (index % 3 === 2 && item.length !== 69) throw new Error(false);
+            if (index % 3 === 1 && item.length < 69) throw new Error(false);
+            if (index % 3 === 2 && item.length < 69) throw new Error(false);
         })
         return true;
     } catch (error) {
@@ -236,7 +241,7 @@ function checkTleData(data) {
 // 添加自定义卫星实例
 function handleAddSatellite() {
     if (!checkTleData(tleData.value)) {
-        ElMessage.error('error tle data');
+        ElMessage.error('wrong TLE data');
         return;
     }
     clearcustomSatelliteMap();
@@ -247,17 +252,24 @@ function handleAddSatellite() {
         let result = viewer.entities.add(cesiumSateEntity);
         customSatelliteMap.set(satellite.name, result)
     });
+    viewer.zoomTo(viewer.entities);
 
 }
 
-function handleImportSatellite() {
-
+async function handleImportSatellite(uploadFiles) {
+    if (uploadFiles.raw.type !== "text/plain") {
+        ElMessage.warning('请上传TXT格式的TLE数据');
+        return;
+    }
+    let data = await uploadFiles.raw.text();
+    tleData.value = data;
 }
 
 // 清空所有状态，输入框和cesium实例
 function handleClearSatellite() {
     clearcustomSatelliteMap();
     tleData.value = "";
+    upload.value.clearFiles();
 }
 
 // 清空卫星实例;
