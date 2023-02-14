@@ -1,4 +1,5 @@
 # satellite-track
+[中文](https://github.com/jiangteng2019/satellite-track#readme) | [English](https://github.com/jiangteng2019/satellite-track/blob/master/README.en.md)
 
 ## Introduction
 

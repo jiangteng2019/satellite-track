@@ -202,7 +202,7 @@ function handleSatelliteChange(e) {
 }
 
 function handleClearTLECache() {
-    ElMessageBox.confirm("清空TLE缓存后手动刷新页面将重新下载TLE数据，是否继续？", "确定", {
+    ElMessageBox.confirm("清空TLE缓存后手动刷新页面将重新下载TLE数据，是否继续？", "提示", {
         distinguishCancelAndClose: true,
         confirmButtonText: '确定',
         cancelButtonText: '取消',
