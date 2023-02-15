@@ -1,6 +1,6 @@
 let specialSatellite = [
     {
-        label: "特殊卫星",
+        label: "卫星集合",
         value: null,
         group: null,
         type: "title"

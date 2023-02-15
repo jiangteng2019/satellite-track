@@ -1,8 +1,8 @@
 <template>
     <div id="cesiumContainer"></div>
     <div class="operate_container">
-        <div class="menu_button" @click="drawer = !drawer" title="控制面板">
-            <img src="../../assets/menu.svg" width="28" height="28" alt="控制面板">
+        <div class="menu_button" @click="drawer = !drawer" title="卫星星座选择">
+            <img src="../../assets/menu.svg" width="28" height="28" alt="卫星星座选择">
         </div>
         <div class="menu_button" @click="drawerImport = !drawerImport" title="自定义导入TLE数据">
             <img src="../../assets/import.svg" width="28" height="28" alt="自定义导入TLE数据">
@@ -15,7 +15,7 @@
         </div>
     </div>
     <!-- 抽屉1 -->
-    <el-drawer v-model="drawer" title="控制面板" direction="ltr">
+    <el-drawer v-model="drawer" title="卫星星座选择" direction="ltr">
         <el-checkbox-group v-model="checked" @change="handleSatelliteChange" :max=5>
             <template v-for="(item, index) in allSatellite" :key="index">
                 <el-row v-if="item.type === 'title'" class="satellite_type">{{ item.label }}</el-row>
