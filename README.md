@@ -20,4 +20,4 @@ satellite-track 是一款追踪卫星轨道的程序，使用cesium、vue、sate
 
 
 ## 示例
-[![satellite-track](https://img-blog.csdnimg.cn/89809e1eca78428c82dde7cab4801bac.png "satellite-track")](https://img-blog.csdnimg.cn/89809e1eca78428c82dde7cab4801bac.png "satellite-track")
+[![satellite-track](https://img2023.cnblogs.com/blog/1038573/202303/1038573-20230317144305572-182523586.jpg "satellite-track")](https://img2023.cnblogs.com/blog/1038573/202303/1038573-20230317144305572-182523586.jpg "satellite-track")
