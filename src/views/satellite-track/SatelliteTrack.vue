@@ -30,8 +30,7 @@
             <el-button type="primary" @click="handleAddSatellite">
                 添加
             </el-button>
-            <el-upload class="upload_button" :on-change="handleImportSatellite" :show-file-list="false" accept="txt"
-                :limit="1" :auto-upload="false" ref="upload">
+            <el-upload class="upload_button" :on-change="handleImportSatellite" :show-file-list="false" accept="txt" :limit="1" :auto-upload="false" ref="upload">
                 <template #trigger>
                     <el-button type="default">导入</el-button>
                 </template>
@@ -100,19 +99,36 @@ function initCesium() {
         return Cesium.JulianDate.toIso8601(dataZone8).slice(0, 19);
     }
 
-    let imgLayer = new Cesium.MapboxImageryProvider({
-        mapId: 'mapbox.satellite',
-        accessToken: 'pk.eyJ1Ijoiamlhbmd0ZW5nIiwiYSI6ImNqbGhhcDhzMjAxdncza294c2ZqcHFxNGIifQ.rjSmtZ5QzE2sJ-qDANh3WQ'
+    // mapbox 卫星地图
+    // let imgLayer = new Cesium.MapboxImageryProvider({
+    //     mapId: 'mapbox.satellite',
+    //     accessToken: 'pk.eyJ1Ijoiamlhbmd0ZW5nIiwiYSI6ImNqbGhhcDhzMjAxdncza294c2ZqcHFxNGIifQ.rjSmtZ5QzE2sJ-qDANh3WQ'
+    // });
+
+    //高德卫星地图
+    let imgLayer = new Cesium.UrlTemplateImageryProvider({
+        url: "https://webst02.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}",
+        minimumLevel: 3,
+        maximumLevel: 18
     });
+
+    // 高德地图路网图层
+    var gaoDeImageryProvider = new Cesium.UrlTemplateImageryProvider({
+        url: "http://webst02.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&lang=zh_cn&size=1&scale=1&style=8",
+        minimumLevel: 3,
+        maximumLevel: 18
+    })
 
     viewer = new Cesium.Viewer('cesiumContainer', {
         // terrainProvider: Cesium.createWorldTerrain(),  // 会触发渲染错误
-        imageryProvider: imgLayer,
-        baseLayerPicker: false,
+        // imageryProvider: imgLayer,
+        baseLayerPicker: true,
         geocoder: false,
         navigationHelpButton: false,
         infoBox: false
     });
+
+    // viewer.imageryLayers.addImageryProvider(gaoDeImageryProvider);
 
     // 时间格式化
     let minutes = 0 - new Date().getTimezoneOffset(); // 0 - (-480);
