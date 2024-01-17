@@ -6,9 +6,23 @@
 Satellite-track is a program for tracking satellite orbit, developed by cesium, vue and satelliteJS. It supports satellite and satellite constellation orbit display within the next 24 hours (performance considerations); Custom satellite orbit data (TLE) loading is also supported,TLE data is from celestrak;
 
 ## Preview
-#### [【satellite-track】](https://jiangteng2019.github.io/satellite-track/)
-#### [【Alternate address】](http://120.48.134.120:10181/satellite-track/)
+#### [【GitHub Pages】](https://jiangteng2019.github.io/satellite-track/)
+#### [【satellite-track】](http://120.48.134.120:10181/satellite-track/)
 
+## Run
+```sh
+# Clone project
+git clone https://github.com/jiangteng2019/satellite-track.git
+# enter the project root directory
+cd satellite-track
+# Install dependencies
+npm install
+# startup project
+npm run dev
+# Compile and package
+npm run build
+```
+The compiled file cannot be opened using the browser's file protocol. You need a static resource server, such as nginx.
 
 ## Tips
 1. The access speed of github pages is slow, and the TLE data and cesium data are large. Please wait patiently for the resources to load;
