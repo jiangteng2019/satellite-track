@@ -13,12 +13,16 @@ Satellite-track is a program for tracking satellite orbit, developed by cesium, 
 ```sh
 # Clone project
 git clone https://github.com/jiangteng2019/satellite-track.git
+
 # enter the project root directory
 cd satellite-track
+
 # Install dependencies
 npm install
+
 # startup project
 npm run dev
+
 # Compile and package
 npm run build
 ```

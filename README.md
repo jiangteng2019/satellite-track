@@ -13,12 +13,16 @@ satellite-track 是一款追踪卫星轨道的程序，使用cesium、vue、sate
 ```sh
 # 克隆项目工程
 git clone https://github.com/jiangteng2019/satellite-track.git
+
 # 进入项目根目录
 cd satellite-track
+
 # 安装依赖
 npm install
+
 # 启动项目
 npm run dev
+
 # 编译打包
 npm run build
 ```
