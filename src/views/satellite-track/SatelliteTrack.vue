@@ -62,7 +62,7 @@ import { specialSatellite, weatherSatellite, communicationSatellite, navigationS
 let allSatellite = [...specialSatellite, ...weatherSatellite, ...communicationSatellite, ...navigationSatellite, ...scientificSatellite, ...miscellaneousSatellite];
 
 
-window.CESIUM_BASE_URL = import.meta.env.MODE === 'development' ? '/cesium' : '/cesium';
+window.CESIUM_BASE_URL = import.meta.env.MODE === 'development' ? '/cesium' : '/satellite-track/cesium';
 
 let viewer;
 const totalSeconds = 86400;
