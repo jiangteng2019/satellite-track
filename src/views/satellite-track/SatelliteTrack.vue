@@ -121,7 +121,7 @@ function initCesium() {
 
     viewer = new Cesium.Viewer('cesiumContainer', {
         // terrainProvider: Cesium.createWorldTerrain(),  // 会触发渲染错误
-        // imageryProvider: imgLayer,
+        imageryProvider: imgLayer,
         baseLayerPicker: true,
         geocoder: false,
         navigationHelpButton: false,
