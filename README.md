@@ -7,7 +7,7 @@ satellite-track 是一款追踪卫星轨道的程序，使用cesium、vue、sate
 
 ## 预览
 #### [【GitHub Pages】](https://jiangteng2019.github.io/satellite-track/)
-#### [【satellite-track】](http://120.48.134.120:10181/satellite-track/)
+#### [【satellite-track】](https://cesium.pages.dev/)
 
 ## 运行
 ```sh

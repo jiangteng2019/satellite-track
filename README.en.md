@@ -7,7 +7,7 @@ Satellite-track is a program for tracking satellite orbit, developed by cesium, 
 
 ## Preview
 #### [【GitHub Pages】](https://jiangteng2019.github.io/satellite-track/)
-#### [【satellite-track】](http://120.48.134.120:10181/satellite-track/)
+#### [【satellite-track】](https://cesium.pages.dev/)
 
 ## Run
 ```sh
