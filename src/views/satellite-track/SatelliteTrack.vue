@@ -4,17 +4,8 @@
         <div class="menu_button" @click="drawer = !drawer" title="卫星星座选择">
             <img src="../../assets/menu.svg" width="28" height="28" alt="卫星星座选择">
         </div>
-        <div class="menu_button" @click="drawerImport = !drawerImport" title="自定义导入TLE数据">
-            <img src="../../assets/import.svg" width="28" height="28" alt="自定义导入TLE数据">
-        </div>
-        <div class="menu_button" @click="handleClearTLECache" title="清除TLE缓存">
-            <img src="../../assets/clean.svg" width="24" height="24" alt="清除TLE缓存">
-        </div>
-        <div class="menu_button" @click="clearSatelliteOrbit" title="清除轨道">
-            <img src="../../assets/hide.svg" width="24" height="24" alt="清除轨道">
-        </div>
     </div>
-    <!-- 抽屉1 -->
+
     <el-drawer v-model="drawer" title="卫星星座选择" direction="ltr">
         <el-checkbox-group v-model="checked" @change="handleSatelliteChange" :max=5>
             <template v-for="(item, index) in allSatellite" :key="index">
@@ -23,24 +14,6 @@
             </template>
         </el-checkbox-group>
     </el-drawer>
-    <!-- 抽屉2 -->
-    <el-drawer v-model="drawerImport" title="自定义卫星数据" direction="ltr">
-        <el-input v-model="tleData" type="textarea" placeholder="Please input tle data" :rows="20" />
-        <el-row class="add_satellite">
-            <el-button type="primary" @click="handleAddSatellite">
-                添加
-            </el-button>
-            <el-upload class="upload_button" :on-change="handleImportSatellite" :show-file-list="false" accept="txt" :limit="1" :auto-upload="false" ref="upload">
-                <template #trigger>
-                    <el-button type="default">导入</el-button>
-                </template>
-            </el-upload>
-            <el-button type="danger" @click="handleClearSatellite">
-                清空
-            </el-button>
-        </el-row>
-
-    </el-drawer>
 </template>
 
 <script setup>
@@ -48,45 +21,29 @@
 
 import * as Cesium from 'cesium';
 import "cesium/Build/Cesium/Widgets/widgets.css";
-
 import { onMounted, ref, watch } from 'vue';
-
 import "./SatelliteTrack.scss"
-
 import { getTleDataFromExternal } from '@/http/index'
-
 import SatelliteEntity from '@/js/SatelliteEntity';
-
 import { specialSatellite, weatherSatellite, communicationSatellite, navigationSatellite, scientificSatellite, miscellaneousSatellite } from "./satelliteType"
+import { compareArrays } from '@/utils';
 
-let allSatellite = [...specialSatellite, ...weatherSatellite, ...communicationSatellite, ...navigationSatellite, ...scientificSatellite, ...miscellaneousSatellite];
-
+const allSatellite = [...specialSatellite, ...weatherSatellite, ...communicationSatellite, ...navigationSatellite, ...scientificSatellite, ...miscellaneousSatellite];
 
 window.CESIUM_BASE_URL = import.meta.env.MODE === 'development' ? '/cesium' : '/satellite-track/cesium';
 
 let viewer;
+// 默认场景的时间跨度
 const totalSeconds = 86400;
-// 保存所有的卫星实例 
+// 保存分组的卫星实例 
 const satelliteMap = new Map();
-// 自定义的卫星
-const customSatelliteMap = new Map();
 // 响应式数据
 const drawer = ref(false);
+// 默认勾选
+const checked = ref(["last-30-days"]);
+// TLE缓存
+const tleCache = new Map();
 
-const drawerImport = ref(false);
-
-const checked = ref([1]);
-
-const clickedSatelliteArray = [];
-
-const upload = ref(null);
-
-let tleData = ref(`BEIDOU-3 G2             
-1 45344U 20017A   23037.82027362 -.00000136  00000+0  00000+0 0  9994
-2 45344   1.9879   4.6761 0000950 328.7503 178.5761  1.00272999 10962
-BEIDOU-3 G3             
-1 45807U 20040A   23037.85365455 -.00000347  00000+0  00000+0 0  9999
-2 45807   0.9369 314.6571 0008244 342.4957 257.2704  1.00264764  9772`);
 
 
 Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJiYjZmMWM4Ny01YzQ4LTQ3MzUtYTI5Mi1hNTgyNjdhMmFiMmMiLCJpZCI6NjIwMjgsImlhdCI6MTYyNjY3MTMxNX0.5SelYUyzXWRoMyjjFvmFIAoPtWlJPQMjsVl2e_jQe-c';
@@ -99,12 +56,6 @@ function initCesium() {
         return Cesium.JulianDate.toIso8601(dataZone8).slice(0, 19);
     }
 
-    // mapBox 卫星地图
-    let mapBoxImgLayer = new Cesium.MapboxImageryProvider({
-        mapId: 'mapbox.satellite',
-        accessToken: 'pk.eyJ1Ijoiamlhbmd0ZW5nIiwiYSI6ImNqbGhhcDhzMjAxdncza294c2ZqcHFxNGIifQ.rjSmtZ5QzE2sJ-qDANh3WQ'
-    });
-
     //高德卫星地图
     let gaoDeSatelliteImgLayer = new Cesium.UrlTemplateImageryProvider({
         url: "https://webst02.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}",
@@ -112,13 +63,6 @@ function initCesium() {
         maximumLevel: 18,
         tilingScheme: new Cesium.WebMercatorTilingScheme(),
     });
-
-    // 高德地图路网图层
-    let gaoDeImageryProvider = new Cesium.UrlTemplateImageryProvider({
-        url: "http://webst02.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&lang=zh_cn&size=1&scale=1&style=8",
-        minimumLevel: 3,
-        maximumLevel: 18,
-    })
 
     viewer = new Cesium.Viewer('cesiumContainer', {
         baseLayerPicker: true,
@@ -191,23 +135,6 @@ function parseTle(data = "") {
     return tles;
 }
 
-function parseTleWithSimpleSplit(data = "") {
-    if (data.length === 0) return;
-    let result = data.split("\n");
-    console.log(result)
-    let tles = [], i = 0, tem = [];
-    result.forEach(item => {
-        i++;
-        tem.push(item)
-        if (i === 3) {
-            tles.push(tem.join("\r\n"));
-            tem = [];
-            i = 0;
-        }
-    });
-    return tles;
-}
-
 function addCesiumEventListener() {
     let callback = viewer.screenSpaceEventHandler.getInputAction(Cesium.ScreenSpaceEventType.LEFT_CLICK);
     viewer.screenSpaceEventHandler.setInputAction(function onLeftClick(movement) {
@@ -218,9 +145,7 @@ function addCesiumEventListener() {
 
         }
         if (pickedFeature) {
-            pickedFeature.id.path.show = new Cesium.ConstantProperty(true);
-            pickedFeature.id.label.distanceDisplayCondition = undefined;
-            clickedSatelliteArray.push(pickedFeature);
+
         }
 
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
@@ -231,106 +156,18 @@ function handleSatelliteChange(e) {
 
 }
 
-function handleClearTLECache() {
-    ElMessageBox.confirm("清空TLE缓存后手动刷新页面将重新下载TLE数据，是否继续？", "提示", {
-        distinguishCancelAndClose: true,
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-    }).then(() => {
-        clearTLECache();
-    }).catch(() => {
-        console.log('取消');
-    })
-}
 
-function clearTLECache() {
-    // satelliteMap.forEach(satelliteSet => satelliteSet.forEach(sate => viewer.entities.remove(sate)));
-    // satelliteMap.clear();  // 一级缓存
-    localStorage.clear(); // 二级缓存
-    ElMessage.success('清除成功')
-}
-
-function clearSatelliteOrbit() {
-    if (clickedSatelliteArray.length) {
-        clickedSatelliteArray.forEach(item => {
-            item.id ? item.id.path.show = false : '';
-        })
-    }
-}
-
-function checkTleData(data) {
-    try {
-        if (!data.length) {
-            return false;
-        }
-        let dataArray = data.split('\n');
-        if (dataArray.length % 3 !== 0) {
-            return false;
-        }
-        dataArray.forEach((item, index) => {
-            if (index % 3 === 0 && !item) throw new Error(false);
-            if (index % 3 === 1 && item.length < 69) throw new Error(false);
-            if (index % 3 === 2 && item.length < 69) throw new Error(false);
-        })
-        return true;
-    } catch (error) {
-        console.log(error);
-        return false;
-    }
-}
-
-// 添加自定义卫星实例
-function handleAddSatellite() {
-    if (!checkTleData(tleData.value)) {
-        ElMessage.error('wrong TLE data');
-        return;
-    }
-    clearCustomSatelliteMap();
-    let result = parseTleWithSimpleSplit(tleData.value);
-    result.forEach(tle => {
-        let satellite = new SatelliteEntity(tle);
-        let cesiumSateEntity = satellite.createSatelliteEntity();
-        let result = viewer.entities.add(cesiumSateEntity);
-        customSatelliteMap.set(satellite.name, result)
-    });
-    viewer.zoomTo(viewer.entities);
-
-}
-
-async function handleImportSatellite(uploadFiles) {
-    upload.value.clearFiles();
-    if (uploadFiles.raw.type !== "text/plain") {
-        ElMessage.warning('请上传TXT格式的TLE数据');
-        return;
-    }
-    let data = await uploadFiles.raw.text();
-    tleData.value = data;
-}
-
-// 清空所有状态，输入框和cesium实例
-function handleClearSatellite() {
-    clearCustomSatelliteMap();
-    tleData.value = "";
-    upload.value.clearFiles();
-}
-
-// 清空卫星实例;
-function clearCustomSatelliteMap() {
-    customSatelliteMap.forEach(item => viewer.entities.remove(item));
-    customSatelliteMap.clear();
-}
-
-
-// 获取tle数据，从缓存中获取，若无请求数据
-
+// 获取tle数据，从缓存中获取，若无则请求数据
 async function getTleData(path) {
-    let data = localStorage.getItem(path);
+    let data = tleCache.get(path);
     if (data) {
         console.log(`%c 命中缓存,key值为${path}`, 'color:#0f0;');
         return data;
     } else {
         console.warn("未命中缓存，开始下载TLE数据");
-        return await getTleDataFromExternal(path);
+        const res = await getTleDataFromExternal(path);
+        tleCache.set(path, res);
+        return res;
     }
 }
 
@@ -362,16 +199,14 @@ function removeSatellite(path) {
     }
 }
 
-// 侦听器
 watch(checked, (newValue, oldValue) => {
-    let filterValue = newValue.concat(oldValue).filter((item, index, arr) => arr.indexOf(item) === arr.lastIndexOf(item));
-    let satelliteClassify = allSatellite.find(item => item.value === filterValue[0]);
-    // 勾选了卫星
-    if (newValue.length > oldValue.length) {
-        addSatellite(satelliteClassify.group);
-    } else {
-        //取消了勾选
-        removeSatellite(satelliteClassify.group);
+    const { addedItems, removedItems } = compareArrays(oldValue, newValue);
+    if (addedItems.length) {
+        // 默认只会有一次操作，也就是说addedItems, removedItems数组中的元素只会有一个，可以直接取第一个元素
+        addSatellite(addedItems[0]);
+    }
+    if (removedItems.length) {
+        removeSatellite(removedItems[0]);
     }
 })
 
@@ -381,7 +216,6 @@ onMounted(async () => {
     initCesium();
     initTimeLine();
     addCesiumEventListener();
-    addSatellite('last-30-days');
 })
 
 

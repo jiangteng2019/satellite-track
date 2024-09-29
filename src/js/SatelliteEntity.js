@@ -51,6 +51,7 @@ class SatelliteEntity {
     createSatelliteEntity() {
         const start = Cesium.JulianDate.fromIso8601(new Date().toISOString());
         const stop = Cesium.JulianDate.addSeconds(start, this.totalSeconds, new Cesium.JulianDate());
+        const color = Cesium.Color.fromRandom({ alpha: 1.0 });
         let satelliteEntity = {
             name: this.name,
             description: this.name,
@@ -58,15 +59,15 @@ class SatelliteEntity {
             position: this._getPositionProperty(),
             point: {
                 pixelSize: 8,
-                color: Cesium.Color.fromRandom({ alpha: 1.0 }),
+                color: color,
                 // scaleByDistance: new Cesium.NearFarScalar(1.5e3, 1, 8.0e8, 0.5),
             },
             path: new Cesium.PathGraphics({
-                width: 1,
-                show: false,
+                width: 0.5,
+                show: true,
                 leadTime: this.leadTime,
                 trailTime: this.trailTime,
-                material: Cesium.Color.LIME,
+                material: color,
             }),
             label: {
                 text: this.name,
@@ -79,7 +80,7 @@ class SatelliteEntity {
                 horizontalOrigin: Cesium.VerticalOrigin.LEFT,
                 pixelOffset: new Cesium.Cartesian2(0, 5),
                 fillColor: Cesium.Color.WHITE,
-                distanceDisplayCondition: new Cesium.DistanceDisplayCondition(10.0, 5000000),
+                // distanceDisplayCondition: new Cesium.DistanceDisplayCondition(10.0, 50000000),
             }
         }
         return satelliteEntity;
