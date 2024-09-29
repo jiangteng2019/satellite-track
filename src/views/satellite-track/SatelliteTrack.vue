@@ -99,36 +99,50 @@ function initCesium() {
         return Cesium.JulianDate.toIso8601(dataZone8).slice(0, 19);
     }
 
-    // mapbox 卫星地图
-    // let imgLayer = new Cesium.MapboxImageryProvider({
-    //     mapId: 'mapbox.satellite',
-    //     accessToken: 'pk.eyJ1Ijoiamlhbmd0ZW5nIiwiYSI6ImNqbGhhcDhzMjAxdncza294c2ZqcHFxNGIifQ.rjSmtZ5QzE2sJ-qDANh3WQ'
-    // });
+    // mapBox 卫星地图
+    let mapBoxImgLayer = new Cesium.MapboxImageryProvider({
+        mapId: 'mapbox.satellite',
+        accessToken: 'pk.eyJ1Ijoiamlhbmd0ZW5nIiwiYSI6ImNqbGhhcDhzMjAxdncza294c2ZqcHFxNGIifQ.rjSmtZ5QzE2sJ-qDANh3WQ'
+    });
 
     //高德卫星地图
-    let imgLayer = new Cesium.UrlTemplateImageryProvider({
+    let gaoDeSatelliteImgLayer = new Cesium.UrlTemplateImageryProvider({
         url: "https://webst02.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}",
         minimumLevel: 3,
-        maximumLevel: 18
+        maximumLevel: 18,
+        tilingScheme: new Cesium.WebMercatorTilingScheme(),
     });
 
     // 高德地图路网图层
-    var gaoDeImageryProvider = new Cesium.UrlTemplateImageryProvider({
+    let gaoDeImageryProvider = new Cesium.UrlTemplateImageryProvider({
         url: "http://webst02.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&lang=zh_cn&size=1&scale=1&style=8",
         minimumLevel: 3,
-        maximumLevel: 18
+        maximumLevel: 18,
     })
 
     viewer = new Cesium.Viewer('cesiumContainer', {
-        // terrainProvider: Cesium.createWorldTerrain(),  // 会触发渲染错误
-        imageryProvider: imgLayer,
         baseLayerPicker: true,
         geocoder: false,
         navigationHelpButton: false,
         infoBox: false
     });
 
-    // viewer.imageryLayers.addImageryProvider(gaoDeImageryProvider);
+    const customLayerViewModel = new Cesium.ProviderViewModel({
+        name: '高德地图',
+        iconUrl: '/src/assets/gaode.jpg',
+        tooltip: '高德地图',
+        category: 'Cesium ion',  // 或 'Other 、Cesium ion'、'Bing Maps' 等
+        creationFunction: function () {
+            return gaoDeSatelliteImgLayer;
+        }
+    });
+
+    viewer.baseLayerPicker.viewModel.imageryProviderViewModels.unshift(customLayerViewModel);
+
+    // 设置高德地图为默认图层
+    const selectedViewModel = viewer.baseLayerPicker.viewModel.imageryProviderViewModels[0];
+    viewer.baseLayerPicker.viewModel.selectedImagery = selectedViewModel;
+
 
     // 时间格式化
     let minutes = 0 - new Date().getTimezoneOffset(); // 0 - (-480);
