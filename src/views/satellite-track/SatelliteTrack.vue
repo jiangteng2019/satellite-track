@@ -27,6 +27,7 @@ import { getTleDataFromExternal } from '@/http/index'
 import SatelliteEntity from '@/js/SatelliteEntity';
 import { specialSatellite, weatherSatellite, communicationSatellite, navigationSatellite, scientificSatellite, miscellaneousSatellite } from "./satelliteType"
 import { compareArrays } from '@/utils';
+import gaodeImage from "@/assets/gaode.jpg"
 
 const allSatellite = [...specialSatellite, ...weatherSatellite, ...communicationSatellite, ...navigationSatellite, ...scientificSatellite, ...miscellaneousSatellite];
 
@@ -40,7 +41,7 @@ const satelliteMap = new Map();
 // 响应式数据
 const drawer = ref(false);
 // 默认勾选
-const checked = ref(["last-30-days"]);
+const checked = ref([]);
 // TLE缓存
 const tleCache = new Map();
 
@@ -73,7 +74,7 @@ function initCesium() {
 
     const customLayerViewModel = new Cesium.ProviderViewModel({
         name: '高德地图',
-        iconUrl: '/src/assets/gaode.jpg',
+        iconUrl: gaodeImage,
         tooltip: '高德地图',
         category: 'Cesium ion',  // 或 'Other 、Cesium ion'、'Bing Maps' 等
         creationFunction: function () {
